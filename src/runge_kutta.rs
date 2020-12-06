@@ -81,7 +81,7 @@ pub trait WeightedAverageAsync: Clone
 
 
 // ============================================================================
-pub async fn async_advance_rk1<S, R, U, F>(state: S, update: U, _runtime: &R) -> S
+pub async fn advance_async_rk1<S, R, U, F>(state: S, update: U, _runtime: &R) -> S
     where
     S: WeightedAverageAsync<Runtime=R>,
     U: Fn(S) -> F,
@@ -90,7 +90,7 @@ pub async fn async_advance_rk1<S, R, U, F>(state: S, update: U, _runtime: &R) ->
     update(state).await
 }
 
-pub async fn async_advance_rk2<S, R, U, F>(state: S, update: U, runtime: &R) -> S
+pub async fn advance_async_rk2<S, R, U, F>(state: S, update: U, runtime: &R) -> S
     where
     S: WeightedAverageAsync<Runtime=R>,
     U: Fn(S) -> F,
@@ -104,7 +104,7 @@ pub async fn async_advance_rk2<S, R, U, F>(state: S, update: U, runtime: &R) -> 
     s1
 }
 
-pub async fn async_advance_rk3<S, R, U, F>(state: S, update: U, runtime: &R) -> S
+pub async fn advance_async_rk3<S, R, U, F>(state: S, update: U, runtime: &R) -> S
     where
     S: WeightedAverageAsync<Runtime=R>,
     U: Fn(S) -> F,
@@ -162,9 +162,22 @@ impl RungeKuttaOrder
         Update: Fn(State) -> State
     {
         match self {
-            RungeKuttaOrder::RK1 => advance_rk1(state, update),        
-            RungeKuttaOrder::RK2 => advance_rk2(state, update),        
-            RungeKuttaOrder::RK3 => advance_rk3(state, update),        
+            RungeKuttaOrder::RK1 => advance_rk1(state, update),
+            RungeKuttaOrder::RK2 => advance_rk2(state, update),
+            RungeKuttaOrder::RK3 => advance_rk3(state, update),
+        }
+    }
+
+    pub async fn advance_async<S, R, U, F>(self, state: S, update: U, runtime: &R) -> S
+        where
+        S: WeightedAverageAsync<Runtime=R>,
+        U: Fn(S) -> F,
+        F: Future<Output=S>,
+    {
+        match self {
+            RungeKuttaOrder::RK1 => advance_async_rk1(state, update, runtime).await,
+            RungeKuttaOrder::RK2 => advance_async_rk2(state, update, runtime).await,
+            RungeKuttaOrder::RK3 => advance_async_rk3(state, update, runtime).await,
         }
     }
 }
