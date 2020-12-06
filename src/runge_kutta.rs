@@ -1,5 +1,6 @@
 use std::ops::{Add, Mul};
 use std::convert::TryFrom;
+use std::future::Future;
 use num::rational::Rational64;
 
 
@@ -62,6 +63,60 @@ pub fn advance_rk3<S: Clone + WeightedAverage, Update: Fn(S) -> S>(s0: S, update
     let s1 = update(s1);
     let s1 = update(s1).weighted_average(b1, &s0);
     let s1 = update(s1).weighted_average(b2, &s0);
+    s1
+}
+
+
+
+
+// ============================================================================
+#[async_trait::async_trait]
+pub trait WeightedAverageAsync: Clone
+{
+    type Runtime;
+    async fn weighted_average(self, b: Rational64, s0: &Self, runtime: &Self::Runtime) -> Self;
+}
+
+
+
+
+// ============================================================================
+pub async fn async_advance_rk1<S, R, U, F>(state: S, update: U, _runtime: &R) -> S
+    where
+    S: WeightedAverageAsync<Runtime=R>,
+    U: Fn(S) -> F,
+    F: Future<Output=S>,
+{
+    update(state).await
+}
+
+pub async fn async_advance_rk2<S, R, U, F>(state: S, update: U, runtime: &R) -> S
+    where
+    S: WeightedAverageAsync<Runtime=R>,
+    U: Fn(S) -> F,
+    F: Future<Output=S>,
+{
+    let b1 = Rational64::new(1, 2);
+
+    let s1 = state.clone();
+    let s1 = update(s1).await;
+    let s1 = update(s1).await.weighted_average(b1, &state, runtime).await;
+    s1
+}
+
+pub async fn async_advance_rk3<S, R, U, F>(state: S, update: U, runtime: &R) -> S
+    where
+    S: WeightedAverageAsync<Runtime=R>,
+    U: Fn(S) -> F,
+    F: Future<Output=S>,
+{
+    let b1 = Rational64::new(3, 4);
+    let b2 = Rational64::new(1, 3);
+
+    let s1 = state.clone();
+    let s1 = update(s1).await;
+    let s1 = update(s1).await.weighted_average(b1, &state, runtime).await;
+    let s1 = update(s1).await.weighted_average(b2, &state, runtime).await;
     s1
 }
 
