@@ -18,6 +18,14 @@ fn plm_gradient_f64(theta: f64, yl: f64, y0: f64, yr: f64) -> f64 {
 
 
 //============================================================================
+pub fn plm_gradient(theta: f64, yl: &f64, y0: &f64, yr: &f64) -> f64 {
+    plm_gradient_f64(theta, *yl, *y0, *yr)
+}
+
+
+
+
+//============================================================================
 pub fn plm_gradient3<T: Copy + Into<[f64; 3]> + From<[f64; 3]>>(theta: f64, xl: &T, x0: &T, xr: &T) -> T {
     let yl: [f64; 3] = (*xl).into();
     let y0: [f64; 3] = (*x0).into();
