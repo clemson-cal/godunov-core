@@ -113,7 +113,7 @@ pub async fn advance_async_rk3<S, R, U, F>(state: S, update: U, runtime: &R) -> 
 
 //============================================================================
 #[derive(Clone, Copy, Debug)]
-#[cfg_attr(feature="serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature="serde", derive(serde::Serialize, serde::Deserialize), serde(tag = "type"))]
 pub enum RungeKuttaOrder {
     RK1,
     RK2,
